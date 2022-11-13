@@ -1,10 +1,74 @@
 import { useWallet } from "use-wallet2";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ethers } from "ethers";
+import contractABI from "../contracts/abi/5.json";
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
+  const [FTMamount, setFTMamount] = useState(0);
+  const [TFTamount, setTFTamount] = useState(0);
+  const [TFTPrice, setTFTPrice] = useState(0);
   const wallet = useWallet();
+
+  useEffect(() => {
+    if (wallet.status == "connected") {
+      setIsConnected(false);
+      getPrice();
+    }
+  }, [wallet.status]);
+
+  const getPrice = async () => {
+    try {
+      // const provider = new ethers.providers.Web3Provider(wallet.ethereum);
+      const provider = new ethers.providers.JsonRpcProvider(
+        "https://rpc.ftm.tools/"
+      );
+      const ToonContract = new ethers.Contract(
+        contractABI.presale.address,
+        contractABI.presale.abi,
+        provider
+      );
+      let price = (await ToonContract.getPrice()) / 1000000;
+      setTFTPrice(price);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    setTFTamount(FTMamount * TFTPrice);
+  }, [FTMamount]);
+
+  const buy_button =
+    wallet.status == "connected" ? "Buy Token" : "Connect Wallet";
+
+  const handleChange = (e) => {
+    setFTMamount(e.target.value);
+  };
+
+  const Buy = async () => {
+    try {
+      const provider = new ethers.providers.Web3Provider(wallet.ethereum);
+      const signer = provider.getSigner();
+      const ToonContract = new ethers.Contract(
+        contractABI.presale.address,
+        contractABI.presale.abi,
+        signer
+      );
+      // const signedToonContract = ToonContract.connect(signer);
+      let tx = await ToonContract.buy({
+        value: ethers.utils.parseUnits(FTMamount, 18),
+      });
+      console.log(tx);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const address = wallet.account
+    ? wallet.account.slice(0, 4) + "..." + wallet.account.slice(-4)
+    : "Connect Wallet";
   const connectWallet = () => {
     setIsConnected(!isConnected);
   };
@@ -29,7 +93,7 @@ export default function Home() {
             type="button"
             className="text-[white] font-bold text-black-800 dark:text-black-600 bg-blue-700 hover:bg-blue-400 p-2  mx-2 rounded-xl"
           >
-            Connect Wallet
+            {address}
           </button>
           <a
             href="https://t.me/ToonSwapFinance"
@@ -79,8 +143,8 @@ export default function Home() {
               type="text"
               placeholder="0.0"
               className="outline-none bg-transparent text-2xl leading-1 py-4"
-              readonly=""
-              data-v-ed93e402=""
+              value={FTMamount}
+              onChange={(e) => handleChange(e)}
             />
             <span></span>
             <div className="justify-end items-end w-full flex gap-1 mb-2">
@@ -108,15 +172,18 @@ export default function Home() {
             <input
               type="text"
               placeholder="0.0"
+              value={TFTamount}
+              readOnly
               className="outline-none bg-transparent text-2xl leading-1 py-4 w-full"
-              readonly=""
             />
           </div>
           <button
-            onClick={connectWallet}
+            onClick={wallet.status == "connected" ? Buy : connectWallet}
+            type="button"
             className="rounded-full text-black-800 dark:text-black-600 bg-blue-700 hover:bg-blue-400 w-full p-4 font-bold rounded-4xl"
+            // className="text-[white] font-bold text-black-800 dark:text-black-600 bg-blue-700 hover:bg-blue-400 p-2  mx-2 rounded-xl"
           >
-            Connect Wallet
+            {buy_button}
           </button>
         </form>
         <div className="grid gap-y-4 w-lg max-w-full py-10 px-6 mx-auto">
