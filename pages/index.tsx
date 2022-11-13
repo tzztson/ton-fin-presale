@@ -74,7 +74,7 @@ export default function Home() {
   const buy_button =
     wallet.status == "connected" ? "Buy Token" : "Connect Wallet";
 
-  const handleChange = (e) => {
+  const handleChange = (e):any => {
     setFTMamount(e.target.value);
   };
 
@@ -89,7 +89,7 @@ export default function Home() {
       );
       // const signedToonContract = ToonContract.connect(signer);
       let tx = await ToonContract.buy({
-        value: ethers.utils.parseUnits(FTMamount, 18),
+        value: ethers.utils.parseUnits(FTMamount.toString(), 18),
       });
       console.log(tx);
     } catch (err) {
