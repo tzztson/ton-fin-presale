@@ -61,7 +61,7 @@ export default function Home() {
     try {
       // const provider = new ethers.providers.Web3Provider(wallet.ethereum);
       const provider = new ethers.providers.JsonRpcProvider(
-        "https://rpc.ftm.tools/"
+        "https://goerli.infura.io/v3/ca11249dabe247c1a6e0877c24376dda"
       );
       const ToonContract = new ethers.Contract(
         contractABI.presale.address,
@@ -69,6 +69,7 @@ export default function Home() {
         provider
       );
       let price = (await ToonContract.getPrice()) / 1000000;
+      console.log(price);
       setTFTPrice(price);
     } catch (err) {
       console.log(err);
